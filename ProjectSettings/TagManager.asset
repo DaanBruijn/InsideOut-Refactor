@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags:
+  - JumpObject
+  - BridgeOverTrigger
+  - BridgeUnderTrigger
+  - BridgeOverCollider
+  - BridgeUnderCollider
+  - Checkpoint
+  - SpawnPoint
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - GroundLayer
+  - Water
+  - UI
+  - 
+  - 
+  - ObjectOnBridge
+  - ObjectUnderBridge
+  - Surface
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Background
+    uniqueID: 856652797
+    locked: 0
+  - name: Skidmark
+    uniqueID: 2342269207
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Bridges
+    uniqueID: 4250647363
+    locked: 0
+  - name: BridgeSkidmarks
+    uniqueID: 2863289407
+    locked: 0
+  - name: Flying
+    uniqueID: 152393589
+    locked: 0
+  - name: Particles
+    uniqueID: 1976047387
+    locked: 0
+  m_RenderingLayers:
+  - Default

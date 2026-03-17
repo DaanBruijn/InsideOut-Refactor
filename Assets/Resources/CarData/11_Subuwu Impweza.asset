@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa8a8efc7b9f0524dbd96242b23e66c6, type: 3}
+  m_Name: 11_Subuwu Impweza
+  m_EditorClassIdentifier: 
+  carUniqueID: 11
+  carUISprite: {fileID: 21300000, guid: 15c02469ebd647347b00c968bfb903ff, type: 3}
+  carPrefab: {fileID: 180718372117385434, guid: b825d1ab22298784dae634220e4e19dc, type: 3}
