@@ -11,6 +11,7 @@ TagManager:
   - BridgeUnderCollider
   - Checkpoint
   - SpawnPoint
+  - AI
   layers:
   - Default
   - TransparentFX
