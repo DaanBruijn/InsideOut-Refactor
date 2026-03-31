@@ -22,28 +22,28 @@ public class CarAIController : MonoBehaviour
     public bool isAvoidingCars = true;
     
     // - Private
-    private Vector3 targetPosition = Vector3.zero;
-    private Transform targetTransform = null;
+    private Vector3 _targetPosition = Vector3.zero;
+    private Transform _targetTransform = null;
     
     // - Waypoints
-    WaypointNode currentWaypointNode = null;
-    WaypointNode[] allWaypoints;
+    WaypointNode _currentWaypointNode = null;
+    WaypointNode[] _allWaypoints;
     
     // - Avoidance
-    Vector2 avoidanceVectorLerp = Vector3.zero;
+    Vector2 _avoidanceVectorLerp = Vector3.zero;
     
     // - Colliders
-    BoxCollider2D boxCollider2D;
+    BoxCollider2D _boxCollider2D;
     
     // - Components
-    CarController carController;
+    CarController _carController;
 
     void Awake()
     {
         // - References - Sets all the components 
-        carController = GetComponent<CarController>();
-        allWaypoints = FindObjectsOfType<WaypointNode>();
-        boxCollider2D = GetComponent<BoxCollider2D>();
+        _carController = GetComponent<CarController>();
+        _allWaypoints = FindObjectsOfType<WaypointNode>();
+        _boxCollider2D = GetComponent<BoxCollider2D>();
     }
 
     void FixedUpdate()
@@ -63,46 +63,46 @@ public class CarAIController : MonoBehaviour
                 break;
         }
 
-        inputVector.x = turnTowardsTarget();
-        inputVector.y = applyDrivingForce(inputVector.x);
+        inputVector.x = TurnTowardsTarget();
+        inputVector.y = ApplyDrivingForce(inputVector.x);
 
         // - Send Input to CarController
-        carController.SetInputVector(inputVector);
+        _carController.SetInputVector(inputVector);
         
-        Debug.DrawLine(transform.position, targetPosition, Color.red);
+        Debug.DrawLine(transform.position, _targetPosition, Color.red);
     }
 
     void FollowPlayer()
     {
         // - Handles the Tranform to Player Transform
-        if (targetTransform == null)
-            targetTransform = GameObject.FindGameObjectWithTag("Player").transform;
+        if (_targetTransform == null)
+            _targetTransform = GameObject.FindGameObjectWithTag("Player").transform;
         
-        if (targetTransform != null)
-            targetPosition = targetTransform.position;
+        if (_targetTransform != null)
+            _targetPosition = _targetTransform.position;
     }
 
     void FollowWayPoint()
     {
         // - Pick the Closest waypoint if none are selected yet
-        if (currentWaypointNode == null)
-            currentWaypointNode = FindClosestWaypoint();
+        if (_currentWaypointNode == null)
+            _currentWaypointNode = FindClosestWaypoint();
 
         // - Set Target to next waypoint position
-        if (currentWaypointNode != null)
+        if (_currentWaypointNode != null)
         {
-            targetPosition = currentWaypointNode.transform.position;
+            _targetPosition = _currentWaypointNode.transform.position;
             
             // - Store distnace to target position
-            float distanceToWayPoint = (transform.position - targetPosition).magnitude;
+            float distanceToWayPoint = (transform.position - _targetPosition).magnitude;
 
-            if (distanceToWayPoint <= currentWaypointNode.minDistanceToWayPoint)
+            if (distanceToWayPoint <= _currentWaypointNode.minDistanceToWayPoint)
             {
-                if (currentWaypointNode.maxSpeed > 0)
-                    maxSpeed = currentWaypointNode.maxSpeed;
+                if (_currentWaypointNode.maxSpeed > 0)
+                    maxSpeed = _currentWaypointNode.maxSpeed;
                 else maxSpeed = 100; // - Set high number to make car travel max speed
                 
-                currentWaypointNode = currentWaypointNode.nextWaypointNode[Random.Range(0, currentWaypointNode.nextWaypointNode.Length)];
+                _currentWaypointNode = _currentWaypointNode.nextWaypointNode[Random.Range(0, _currentWaypointNode.nextWaypointNode.Length)];
             }
         }
     }
@@ -113,19 +113,19 @@ public class CarAIController : MonoBehaviour
         Vector3 worldPosition  = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         
         // - Set target location
-        targetPosition = worldPosition;
+        _targetPosition = worldPosition;
     }
 
     WaypointNode FindClosestWaypoint()
     {
         // - Find the next closest Waypoint
-        return allWaypoints.OrderBy(t => Vector3.Distance(transform.position, t.transform.position))
+        return _allWaypoints.OrderBy(t => Vector3.Distance(transform.position, t.transform.position))
             .FirstOrDefault();
     }
 
-    float turnTowardsTarget()
+    float TurnTowardsTarget()
     {
-        Vector2 vectorToTarget = targetPosition - transform.position;
+        Vector2 vectorToTarget = _targetPosition - transform.position;
         vectorToTarget.Normalize();
         
         // - Apply Steering to go around target
@@ -145,27 +145,27 @@ public class CarAIController : MonoBehaviour
         return steerAmount;
     }
 
-    float applyDrivingForce(float SteeringAngle)
+    float ApplyDrivingForce(float SteeringAngle)
     {
         // - If car is going to fast do not go faster
-        if (carController.GetVelocityMagnitude() > maxSpeed)
+        if (_carController.GetVelocityMagnitude() > maxSpeed)
             return 0;
         
         // - Apply throttle based on steering angle
         return 1.05f - Mathf.Abs(SteeringAngle) / 1.0f;
     }
 
-    bool isCarInfrontOfLine(out Vector3 position, out Vector3 otherCarRightVector)
+    bool IsCarInfrontOfLine(out Vector3 position, out Vector3 otherCarRightVector)
     {
         // - Disable Car collider to avoid car detect self
-        boxCollider2D.enabled = false;
+        _boxCollider2D.enabled = false;
         
         // - CircleCast to see if there is car infront
         RaycastHit2D raycastHit = Physics2D.CircleCast(transform.position + transform.up * 0.5f, 0.4f, 
             transform.up, 2, 1 << LayerMask.NameToLayer("ObjectUnderBridge"));
         
         // - Enable Car collider so the car can collide with objects
-        boxCollider2D.enabled = true;
+        _boxCollider2D.enabled = true;
 
         if (raycastHit.collider != null)
         {
@@ -190,14 +190,14 @@ public class CarAIController : MonoBehaviour
 
     void AvoidCars(Vector2 vectorToTarget, out Vector2 newVectorToTarget)
     {
-        if (isCarInfrontOfLine(out Vector3 otherCarPosition, out Vector3 otherCarRightVector))
+        if (IsCarInfrontOfLine(out Vector3 otherCarPosition, out Vector3 otherCarRightVector))
         {
             Vector2 avoidanceVector = Vector2.zero;
 
             // - Calculate the reflecting vector if car were t ohit other car
             avoidanceVector = Vector2.Reflect((otherCarPosition - transform.position).normalized, otherCarRightVector);
             
-            float distanceToTarget = (targetPosition - transform.position).magnitude;
+            float distanceToTarget = (_targetPosition - transform.position).magnitude;
             
             // - When AI car approuches the waypoint the Influence to go towards the Waypoint instead of avoiding the other car increases
             float driveTargetInfluence = 6.0f / distanceToTarget;
@@ -207,7 +207,7 @@ public class CarAIController : MonoBehaviour
             
             float avoindanceInfluence = 1.0f - driveTargetInfluence;
 
-            avoidanceVectorLerp = Vector2.Lerp(avoidanceVectorLerp, avoidanceVector, Time.fixedDeltaTime * 3);
+            _avoidanceVectorLerp = Vector2.Lerp(_avoidanceVectorLerp, avoidanceVector, Time.fixedDeltaTime * 3);
             
             // - AvoidanceVector
             newVectorToTarget = vectorToTarget * driveTargetInfluence + avoidanceVector * avoindanceInfluence;
