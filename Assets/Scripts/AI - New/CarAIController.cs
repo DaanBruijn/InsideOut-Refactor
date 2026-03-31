@@ -21,6 +21,9 @@ public class CarAIController : MonoBehaviour
     public float maxSpeed = 6.5f;
     public bool isAvoidingCars = true;
     
+    [Header("Personality")]
+    public AIPersonality personality;
+    
     // - Private
     private Vector3 _targetPosition = Vector3.zero;
     private Transform _targetTransform = null;
@@ -44,6 +47,9 @@ public class CarAIController : MonoBehaviour
         _carController = GetComponent<CarController>();
         _allWaypoints = FindObjectsOfType<WaypointNode>();
         _boxCollider2D = GetComponent<BoxCollider2D>();
+        
+        personality = new AIPersonality();
+        RandomizePersonality();
     }
 
     void FixedUpdate()
@@ -65,16 +71,22 @@ public class CarAIController : MonoBehaviour
 
         inputVector.x = TurnTowardsTarget();
         inputVector.y = ApplyDrivingForce(inputVector.x);
-
-        // - Send Input to CarController
+        
         _carController.SetInputVector(inputVector);
         
         Debug.DrawLine(transform.position, _targetPosition, Color.red);
     }
+    
+    void RandomizePersonality()
+    {
+        personality.speedMultiplier = Random.Range(0.5f, 2f);
+        personality.aggression = Random.Range(0.5f, 2f);
+        personality.corneringSkill = Random.Range(0.5f, 2f);
+        personality.avoidanceStrength = Random.Range(0f, 1f);
+    }
 
     void FollowPlayer()
     {
-        // - Handles the Tranform to Player Transform
         if (_targetTransform == null)
             _targetTransform = GameObject.FindGameObjectWithTag("Player").transform;
         
@@ -109,10 +121,8 @@ public class CarAIController : MonoBehaviour
 
     void FollowMousePosition()
     {
-        // - Converts Mouse Position to World Position
         Vector3 worldPosition  = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         
-        // - Set target location
         _targetPosition = worldPosition;
     }
 
@@ -128,7 +138,6 @@ public class CarAIController : MonoBehaviour
         Vector2 vectorToTarget = _targetPosition - transform.position;
         vectorToTarget.Normalize();
         
-        // - Apply Steering to go around target
         if (isAvoidingCars)
             AvoidCars(vectorToTarget, out vectorToTarget);
         
@@ -137,27 +146,25 @@ public class CarAIController : MonoBehaviour
         angleToTarget *= -1;
 
         // - Makes car turn more and less depending on corner/angle
-        float steerAmount = angleToTarget / 45.0f;
+        float steerAmount = angleToTarget / (45.0f / personality.corneringSkill);
         
-        // - Clamp Steering
         steerAmount = Mathf.Clamp(steerAmount, -1.0f, 1.0f);
-        
         return steerAmount;
     }
 
     float ApplyDrivingForce(float SteeringAngle)
     {
-        // - If car is going to fast do not go faster
-        if (_carController.GetVelocityMagnitude() > maxSpeed)
+        float adjustedMaxSpeed = maxSpeed * personality.speedMultiplier;
+
+        if (_carController.GetVelocityMagnitude() > adjustedMaxSpeed)
             return 0;
         
-        // - Apply throttle based on steering angle
-        return 1.05f - Mathf.Abs(SteeringAngle) / 1.0f;
+        float throttle = 1.05f - Mathf.Abs(SteeringAngle);
+        return throttle * personality.aggression;
     }
 
     bool IsCarInfrontOfLine(out Vector3 position, out Vector3 otherCarRightVector)
     {
-        // - Disable Car collider to avoid car detect self
         _boxCollider2D.enabled = false;
         
         // - CircleCast to see if there is car infront
@@ -173,7 +180,6 @@ public class CarAIController : MonoBehaviour
 
             position = raycastHit.collider.transform.position;
             otherCarRightVector = raycastHit.collider.transform.right;
-
             return true;
         }
         else
@@ -194,29 +200,28 @@ public class CarAIController : MonoBehaviour
         {
             Vector2 avoidanceVector = Vector2.zero;
 
-            // - Calculate the reflecting vector if car were t ohit other car
+            // - Calculate the reflecting vector if car were to hit other car
             avoidanceVector = Vector2.Reflect((otherCarPosition - transform.position).normalized, otherCarRightVector);
             
             float distanceToTarget = (_targetPosition - transform.position).magnitude;
             
             // - When AI car approuches the waypoint the Influence to go towards the Waypoint instead of avoiding the other car increases
             float driveTargetInfluence = 6.0f / distanceToTarget;
-
-            // - Limit the influence between 25 and 100%
+            
             driveTargetInfluence = Mathf.Clamp(driveTargetInfluence, 0.25f, 1.0f);
             
-            float avoindanceInfluence = 1.0f - driveTargetInfluence;
+            float avoidanceInfluence = (1.0f - driveTargetInfluence) * personality.avoidanceStrength;
 
             _avoidanceVectorLerp = Vector2.Lerp(_avoidanceVectorLerp, avoidanceVector, Time.fixedDeltaTime * 3);
             
             // - AvoidanceVector
-            newVectorToTarget = vectorToTarget * driveTargetInfluence + avoidanceVector * avoindanceInfluence;
+            newVectorToTarget = vectorToTarget * driveTargetInfluence + avoidanceVector * avoidanceInfluence;
             newVectorToTarget.Normalize();
             
-            // - Avoidance Vector
+            // - Avoidance Vector - Debug Line
             Debug.DrawRay(transform.position, avoidanceVector * 5, Color.green);
             
-            // - New path
+            // - New path - Debug Line
             Debug.DrawRay(transform.position, newVectorToTarget * 5, Color.yellow);
 
             return;

@@ -7,7 +7,11 @@
     <list default="true" id="58825a27-1fa6-46f8-a8fc-56cd2d3702e9" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.InsideOut-Refactor/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.InsideOut-Refactor/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scenes/Levels/AI-Test.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Levels/AI-Test.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/AI/CarAIController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/AI/CarAIController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/AI.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/AI/CarAIController.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/AI/CarAIController.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/AI/WaypointNode.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/AI/WaypointNode.cs.meta" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,7 +114,8 @@
       <workItem from="1773740646236" duration="737000" />
       <workItem from="1774613589612" duration="7050000" />
       <workItem from="1774621957889" duration="2920000" />
-      <workItem from="1774959254193" duration="1699000" />
+      <workItem from="1774959254193" duration="2984000" />
+      <workItem from="1774979125627" duration="3789000" />
     </task>
     <servers />
   </component>
