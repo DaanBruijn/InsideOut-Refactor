@@ -64,9 +64,6 @@ public class CarAIController : MonoBehaviour
             case  AIMode.followWaypoints:
                 FollowWayPoint();
                 break;
-            case AIMode.followMouse:
-                FollowMousePosition();
-                break;
         }
 
         inputVector.x = TurnTowardsTarget();
@@ -117,13 +114,6 @@ public class CarAIController : MonoBehaviour
                 _currentWaypointNode = _currentWaypointNode.nextWaypointNode[Random.Range(0, _currentWaypointNode.nextWaypointNode.Length)];
             }
         }
-    }
-
-    void FollowMousePosition()
-    {
-        Vector3 worldPosition  = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        
-        _targetPosition = worldPosition;
     }
 
     WaypointNode FindClosestWaypoint()
