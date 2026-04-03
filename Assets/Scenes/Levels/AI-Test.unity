@@ -3609,10 +3609,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 17469913481404625, guid: 2ee586549c0679a4e8940d7c9ef039df, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0.67058825
+      objectReference: {fileID: 0}
+    - target: {fileID: 17469913481404625, guid: 2ee586549c0679a4e8940d7c9ef039df, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0.99607843
+      objectReference: {fileID: 0}
     - target: {fileID: 180718372117385434, guid: 2ee586549c0679a4e8940d7c9ef039df, type: 3}
       propertyPath: m_Name
       value: AI-Car 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6212191823550761163, guid: 2ee586549c0679a4e8940d7c9ef039df, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: e8e5d55e10043c14ab3707537a988316, type: 3}
     - target: {fileID: 7983486871218575036, guid: 2ee586549c0679a4e8940d7c9ef039df, type: 3}
       propertyPath: m_LocalPosition.x
       value: -5.602
@@ -3652,6 +3664,14 @@ PrefabInstance:
     - target: {fileID: 7983486871218575036, guid: 2ee586549c0679a4e8940d7c9ef039df, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8631251805489390434, guid: 2ee586549c0679a4e8940d7c9ef039df, type: 3}
+      propertyPath: m_Color.g
+      value: 0.67058825
+      objectReference: {fileID: 0}
+    - target: {fileID: 8631251805489390434, guid: 2ee586549c0679a4e8940d7c9ef039df, type: 3}
+      propertyPath: m_Color.r
+      value: 0.99607843
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
