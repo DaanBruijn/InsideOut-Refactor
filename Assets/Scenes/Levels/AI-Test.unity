@@ -3285,11 +3285,7 @@ MonoBehaviour:
   aiMode: 1
   maxSpeed: 0
   isAvoidingCars: 1
-  personality:
-    speedMultiplier: 1
-    aggression: 1
-    corneringSkill: 1
-    avoidanceStrength: 1
+  personality: {fileID: 11400000, guid: 99af5b718470f5d4cbbb46430420e102, type: 2}
 --- !u!114 &1139459216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3719,11 +3715,7 @@ MonoBehaviour:
   aiMode: 1
   maxSpeed: 0
   isAvoidingCars: 1
-  personality:
-    speedMultiplier: 1
-    aggression: 1
-    corneringSkill: 1
-    avoidanceStrength: 1
+  personality: {fileID: 11400000, guid: 4840ef25a77b02d4a819c477abe0302b, type: 2}
 --- !u!114 &1239730040
 MonoBehaviour:
   m_ObjectHideFlags: 0

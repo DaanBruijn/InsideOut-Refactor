@@ -22,7 +22,7 @@ public class CarAIController : MonoBehaviour
     public bool isAvoidingCars = true;
     
     [Header("Personality")]
-    public AIPersonality personality;
+    public AIPersonalitySO personality;
     
     // - Private
     private Vector3 _targetPosition = Vector3.zero;
@@ -47,9 +47,6 @@ public class CarAIController : MonoBehaviour
         _carController = GetComponent<CarController>();
         _allWaypoints = FindObjectsOfType<WaypointNode>();
         _boxCollider2D = GetComponent<BoxCollider2D>();
-        
-        personality = new AIPersonality();
-        RandomizePersonality();
     }
 
     void FixedUpdate()
