@@ -50,6 +50,14 @@ public class CarLapCounter : MonoBehaviour
     {
         return numberOfPassedCheckpoints;
     }
+    public int GetCarPosition()
+    {
+        return carPosition;
+    }
+    public int GetRaceProgress() // - Used in AI Scripts
+    {
+        return numberOfPassedCheckpoints;
+    }
     public float GetTimeAtLastCheckpoint()
     {
         return timeAtLastPassedCheckpoint;

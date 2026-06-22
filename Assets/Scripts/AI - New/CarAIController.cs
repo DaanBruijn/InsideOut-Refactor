@@ -1,113 +1,133 @@
-using System.Collections;
 using UnityEngine;
 using System.Linq;
 
-// - Script for handling the AI cars in the Game
+// - Controller class for the Car AI
+// - Uses Personality and Behaviour dependinging on the player
 // - Daniel Bruijn
 
 public class CarAIController : MonoBehaviour
 {
     // - Variables
+    // - Enums
     public enum AIMode
     {
         followPlayer,
-        followWaypoints,
-        followMouse
-    };
-    
-    // - Public
+        followWaypoints
+    }
+
+    public enum PlayerSituation
+    {
+        AheadFar,
+        AheadNear,
+        BehindFar,
+        BehindNear
+    }
+
+    // - Settings
     [Header("AI Settings")]
     public AIMode aiMode;
     public float maxSpeed = 6.5f;
     public bool isAvoidingCars = true;
-    
+
     [Header("Personality")]
     public AIPersonalitySO personality;
-    
-    // - Private
-    private Vector3 _targetPosition = Vector3.zero;
-    private Transform _targetTransform = null;
-    
-    // - Waypoints
-    WaypointNode _currentWaypointNode = null;
+
+    [Header("Behaviour SOs")]
+    public AIBehaviourSO attackBehaviour;
+    public AIBehaviourSO defendBehaviour;
+    public AIBehaviourSO catchUpBehaviour;
+    public AIBehaviourSO normalBehaviour;
+
+    AIBehaviourSO _currentBehaviour;
+
+    // - Targeting
+    Vector3 _targetPosition;
+    Transform _targetTransform;
+
+    WaypointNode _currentWaypointNode;
     WaypointNode[] _allWaypoints;
-    
-    // - Avoidance
-    Vector2 _avoidanceVectorLerp = Vector3.zero;
-    
-    // - Colliders
-    BoxCollider2D _boxCollider2D;
-    
+
     // - Components
     CarController _carController;
+    CarLapCounter _myLapCounter;
+    CarLapCounter _playerLapCounter;
+    BoxCollider2D _boxCollider2D;
 
+    // - Player State
+    PlayerSituation _playerSituation;
+    bool _isAheadOfPlayer;
+    bool _isNearPlayer;
+    float _distanceToPlayer;
+
+    
     void Awake()
     {
-        // - References - Sets all the components 
         _carController = GetComponent<CarController>();
-        _allWaypoints = FindObjectsOfType<WaypointNode>();
+        _myLapCounter = GetComponent<CarLapCounter>();
         _boxCollider2D = GetComponent<BoxCollider2D>();
+        _allWaypoints = FindObjectsOfType<WaypointNode>();
+
+        _currentBehaviour = normalBehaviour;
+    }
+
+    void Start()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player != null)
+            _playerLapCounter = player.GetComponent<CarLapCounter>();
     }
 
     void FixedUpdate()
     {
-        Vector2 inputVector = Vector2.zero;
+        EvaluatePlayerSituation();
+        EvaluateBehaviour();
 
         switch (aiMode)
         {
             case AIMode.followPlayer:
                 FollowPlayer();
                 break;
-            case  AIMode.followWaypoints:
+
+            case AIMode.followWaypoints:
                 FollowWayPoint();
                 break;
         }
 
-        inputVector.x = TurnTowardsTarget();
-        inputVector.y = ApplyDrivingForce(inputVector.x);
-        
-        _carController.SetInputVector(inputVector);
-        
+        Vector2 input;
+        input.x = TurnTowardsTarget();
+        input.y = ApplyDrivingForce(input.x);
+
+        _carController.SetInputVector(input);
+
         Debug.DrawLine(transform.position, _targetPosition, Color.red);
+        Debug.Log($"{name} | {_playerSituation} | {_currentBehaviour.name}");
     }
     
-    void RandomizePersonality()
-    {
-        personality.speedMultiplier = Random.Range(0.5f, 2f);
-        personality.aggression = Random.Range(0.5f, 2f);
-        personality.corneringSkill = Random.Range(0.5f, 2f);
-        personality.avoidanceStrength = Random.Range(0f, 1f);
-    }
-
     void FollowPlayer()
     {
         if (_targetTransform == null)
             _targetTransform = GameObject.FindGameObjectWithTag("Player").transform;
-        
+
         if (_targetTransform != null)
             _targetPosition = _targetTransform.position;
     }
 
     void FollowWayPoint()
     {
-        // - Pick the Closest waypoint if none are selected yet
         if (_currentWaypointNode == null)
             _currentWaypointNode = FindClosestWaypoint();
 
-        // - Set Target to next waypoint position
-        if (_currentWaypointNode != null)
-        {
-            _targetPosition = _currentWaypointNode.transform.position;
-            
-            // - Store distnace to target position
-            float distanceToWayPoint = (transform.position - _targetPosition).magnitude;
+        if (_currentWaypointNode == null) return;
 
-            if (distanceToWayPoint <= _currentWaypointNode.minDistanceToWayPoint)
+        _targetPosition = _currentWaypointNode.transform.position;
+
+        float dist = Vector3.Distance(transform.position, _targetPosition);
+
+        if (dist <= _currentWaypointNode.minDistanceToWayPoint)
+        {
+            if (_currentWaypointNode.nextWaypointNode.Length > 0)
             {
-                if (_currentWaypointNode.maxSpeed > 0)
-                    maxSpeed = _currentWaypointNode.maxSpeed;
-                else maxSpeed = 100; // - Set high number to make car travel max speed
-                
                 _currentWaypointNode = _currentWaypointNode.nextWaypointNode[Random.Range(0, _currentWaypointNode.nextWaypointNode.Length)];
             }
         }
@@ -115,106 +135,129 @@ public class CarAIController : MonoBehaviour
 
     WaypointNode FindClosestWaypoint()
     {
-        // - Find the next closest Waypoint
-        return _allWaypoints.OrderBy(t => Vector3.Distance(transform.position, t.transform.position))
-            .FirstOrDefault();
+        return _allWaypoints.OrderBy(t => Vector3.Distance(transform.position, t.transform.position)).FirstOrDefault();
     }
-
+    
     float TurnTowardsTarget()
     {
-        Vector2 vectorToTarget = _targetPosition - transform.position;
-        vectorToTarget.Normalize();
-        
-        if (isAvoidingCars)
-            AvoidCars(vectorToTarget, out vectorToTarget);
-        
-        // - Calculate angle towards target
-        float angleToTarget = Vector2.SignedAngle(transform.up, vectorToTarget);
-        angleToTarget *= -1;
+        Vector2 dir = (_targetPosition - transform.position).normalized;
 
-        // - Makes car turn more and less depending on corner/angle
-        float steerAmount = angleToTarget / (45.0f / personality.corneringSkill);
-        
-        steerAmount = Mathf.Clamp(steerAmount, -1.0f, 1.0f);
-        return steerAmount;
+        if (isAvoidingCars)
+            AvoidCars(dir, out dir);
+
+        float angle = Vector2.SignedAngle(transform.up, dir) * -1f;
+        float steer = angle / (45f / personality.corneringSkill);
+        steer *= _currentBehaviour.steeringMultiplier;
+
+        return Mathf.Clamp(steer, -1f, 1f);
     }
 
-    float ApplyDrivingForce(float SteeringAngle)
+    float ApplyDrivingForce(float steering)
     {
-        float adjustedMaxSpeed = maxSpeed * personality.speedMultiplier;
+        float speedMultiplier = personality.speedMultiplier * _currentBehaviour.speedMultiplier;
+        float adjustedMaxSpeed = maxSpeed * speedMultiplier;
 
         if (_carController.GetVelocityMagnitude() > adjustedMaxSpeed)
             return 0;
-        
-        float throttle = 1.05f - Mathf.Abs(SteeringAngle);
+
+        float throttle = 1.05f - Mathf.Abs(steering);
+
         return throttle * personality.aggression;
     }
-
-    bool IsCarInfrontOfLine(out Vector3 position, out Vector3 otherCarRightVector)
+    
+    void AvoidCars(Vector2 targetDir, out Vector2 result)
     {
-        _boxCollider2D.enabled = false;
-        
-        // - CircleCast to see if there is car infront
-        RaycastHit2D raycastHit = Physics2D.CircleCast(transform.position + transform.up * 0.5f, 0.4f, 
-            transform.up, 2, 1 << LayerMask.NameToLayer("ObjectUnderBridge"));
-        
-        // - Enable Car collider so the car can collide with objects
-        _boxCollider2D.enabled = true;
+        float avoidanceMultiplier = _currentBehaviour.avoidanceMultiplier;
 
-        if (raycastHit.collider != null)
+        if (IsCarInFront(out Vector3 otherPos, out Vector3 otherRight))
         {
-            Debug.DrawRay(transform.position, transform.up * 2, Color.red);
+            Vector2 avoid = Vector2.Reflect((otherPos - transform.position).normalized, otherRight);
 
-            position = raycastHit.collider.transform.position;
-            otherCarRightVector = raycastHit.collider.transform.right;
-            return true;
-        }
-        else
-        {
-            Debug.DrawRay(transform.position, transform.up * 2, Color.black);
-        }
-           
-        // - No car was detected
-        position = Vector3.zero;
-        otherCarRightVector = Vector3.zero;
+            float dist = Vector2.Distance(transform.position, _targetPosition);
+            float targetInfluence = Mathf.Clamp(6f / dist, 0.25f, 1f);
 
-        return false;
-    }
+            float avoidanceInfluence = (1f - targetInfluence) * personality.avoidanceStrength * avoidanceMultiplier;
 
-    void AvoidCars(Vector2 vectorToTarget, out Vector2 newVectorToTarget)
-    {
-        if (IsCarInfrontOfLine(out Vector3 otherCarPosition, out Vector3 otherCarRightVector))
-        {
-            Vector2 avoidanceVector = Vector2.zero;
+            result = targetDir * targetInfluence + avoid * avoidanceInfluence;
 
-            // - Calculate the reflecting vector if car were to hit other car
-            avoidanceVector = Vector2.Reflect((otherCarPosition - transform.position).normalized, otherCarRightVector);
-            
-            float distanceToTarget = (_targetPosition - transform.position).magnitude;
-            
-            // - When AI car approuches the waypoint the Influence to go towards the Waypoint instead of avoiding the other car increases
-            float driveTargetInfluence = 6.0f / distanceToTarget;
-            
-            driveTargetInfluence = Mathf.Clamp(driveTargetInfluence, 0.25f, 1.0f);
-            
-            float avoidanceInfluence = (1.0f - driveTargetInfluence) * personality.avoidanceStrength;
+            result.Normalize();
 
-            _avoidanceVectorLerp = Vector2.Lerp(_avoidanceVectorLerp, avoidanceVector, Time.fixedDeltaTime * 3);
-            
-            // - AvoidanceVector
-            newVectorToTarget = vectorToTarget * driveTargetInfluence + avoidanceVector * avoidanceInfluence;
-            newVectorToTarget.Normalize();
-            
-            // - Avoidance Vector - Debug Line
-            Debug.DrawRay(transform.position, avoidanceVector * 5, Color.green);
-            
-            // - New path - Debug Line
-            Debug.DrawRay(transform.position, newVectorToTarget * 5, Color.yellow);
+            Debug.DrawRay(transform.position, avoid * 5, Color.green);
+            Debug.DrawRay(transform.position, result * 5, Color.yellow);
 
             return;
         }
-        
-        // - No car was detected so out is Default
-        newVectorToTarget = vectorToTarget;
+
+        result = targetDir;
+    }
+
+    bool IsCarInFront(out Vector3 pos, out Vector3 right)
+    {
+        _boxCollider2D.enabled = false;
+
+        RaycastHit2D hit = Physics2D.CircleCast(transform.position + transform.up * 0.5f, 0.4f, transform.up, 2f, 1 << LayerMask.NameToLayer("ObjectUnderBridge"));
+
+        _boxCollider2D.enabled = true;
+
+        if (hit.collider != null)
+        {
+            pos = hit.collider.transform.position;
+            right = hit.collider.transform.right;
+            return true;
+        }
+
+        pos = Vector3.zero;
+        right = Vector3.zero;
+        return false;
+    }
+    
+    void EvaluatePlayerSituation()
+    {
+        if (_playerLapCounter == null || _myLapCounter == null)
+            return;
+
+        int myPos = _myLapCounter.GetCarPosition();
+        int playerPos = _playerLapCounter.GetCarPosition();
+
+        _isAheadOfPlayer = myPos < playerPos;
+
+        _distanceToPlayer = Vector2.Distance(transform.position, _playerLapCounter.transform.position);
+        _isNearPlayer = _distanceToPlayer < 1.5f;
+
+        if (_isAheadOfPlayer)
+            _playerSituation = _isNearPlayer ? PlayerSituation.AheadNear : PlayerSituation.AheadFar;
+        else
+            _playerSituation = _isNearPlayer ? PlayerSituation.BehindNear : PlayerSituation.BehindFar;
+    }
+    
+    void EvaluateBehaviour()
+    {
+        if (personality == null)
+            return;
+
+        switch (_playerSituation)
+        {
+            case PlayerSituation.BehindFar:
+                _currentBehaviour = catchUpBehaviour;
+                break;
+
+            case PlayerSituation.BehindNear:
+                _currentBehaviour =
+                    personality.aggression > 1.2f
+                        ? attackBehaviour
+                        : catchUpBehaviour;
+                break;
+
+            case PlayerSituation.AheadNear:
+                _currentBehaviour =
+                    personality.aggression < 1f
+                        ? defendBehaviour
+                        : normalBehaviour;
+                break;
+
+            case PlayerSituation.AheadFar:
+                _currentBehaviour = normalBehaviour;
+                break;
+        }
     }
 }
