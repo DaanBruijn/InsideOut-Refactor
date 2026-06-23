@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1df22bf4b8603744685ae41a85cedc46, type: 3}
   m_Name: Aggressive
   m_EditorClassIdentifier: 
-  speedMultiplier: 1.1
-  aggression: 1.8
+  speedMultiplier: 1.05
+  aggression: 1.5
   corneringSkill: 1
   avoidanceStrength: 0.2

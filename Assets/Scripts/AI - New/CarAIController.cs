@@ -46,6 +46,9 @@ public class CarAIController : MonoBehaviour
 
     WaypointNode _currentWaypointNode;
     WaypointNode[] _allWaypoints;
+    
+    float _steerVelocity;
+    float _smoothedSteer;
 
     // - Components
     CarController _carController;
@@ -157,15 +160,22 @@ public class CarAIController : MonoBehaviour
             AvoidCars(dir, out dir);
 
         float angle = Vector2.SignedAngle(transform.up, dir) * -1f;
+
         float steer = angle / (45f / personality.corneringSkill);
+
         steer *= _currentBehaviour.steeringMultiplier;
 
-        return Mathf.Clamp(steer, -1f, 1f);
+        // - Simulation human error
+        steer *= Random.Range(0.97f, 1.03f);
+        steer = Mathf.Clamp(steer, -0.85f, 0.85f);
+
+        return steer;
     }
 
     float ApplyDrivingForce(float steering)
     {
-        float speedMultiplier = personality.speedMultiplier * _currentBehaviour.speedMultiplier;
+        float speedMultiplier = personality.speedMultiplier * _currentBehaviour.speedMultiplier * GetPlayerPressure();
+
         float adjustedMaxSpeed = maxSpeed * speedMultiplier;
 
         if (_carController.GetVelocityMagnitude() > adjustedMaxSpeed)
@@ -173,35 +183,32 @@ public class CarAIController : MonoBehaviour
 
         float throttle = 1.05f - Mathf.Abs(steering);
 
-        return throttle * personality.aggression;
+        // - Simulation human error
+        float mistakeFactor = Random.Range(0.92f, 1.0f);
+
+        return throttle * personality.aggression * mistakeFactor;
     }
     
     void AvoidCars(Vector2 targetDir, out Vector2 result)
     {
         float avoidanceMultiplier = _currentBehaviour.avoidanceMultiplier;
+        Vector2 finalDir = targetDir;
 
         if (IsCarInFront(out Vector3 otherPos, out Vector3 otherRight))
         {
-            Vector2 avoid = Vector2.Reflect((otherPos - transform.position).normalized, otherRight);
-
+            Vector2 avoidDir = Vector2.Reflect((otherPos - transform.position).normalized, otherRight);
+            
             float dist = Vector2.Distance(transform.position, _targetPosition);
             float targetInfluence = Mathf.Clamp(6f / dist, 0.25f, 1f);
-
             float avoidanceInfluence = (1f - targetInfluence) * personality.avoidanceStrength * avoidanceMultiplier;
 
-            result = targetDir * targetInfluence + avoid * avoidanceInfluence;
-
-            result.Normalize();
-
-            Debug.DrawRay(transform.position, avoid * 5, Color.green);
-            Debug.DrawRay(transform.position, result * 5, Color.yellow);
-
-            return;
+            finalDir = (targetDir * targetInfluence + avoidDir * avoidanceInfluence);
+            finalDir.Normalize();
         }
 
-        result = targetDir;
+        result = finalDir;
     }
-
+    
     bool IsCarInFront(out Vector3 pos, out Vector3 right)
     {
         _boxCollider2D.enabled = false;
@@ -293,6 +300,30 @@ public class CarAIController : MonoBehaviour
                 _lastState = desiredState;
                 _lastStateChangeTime = Time.time;
             }
+        }
+    }
+    
+    float GetPlayerPressure()
+    {
+        if (_playerLapCounter == null || _myLapCounter == null)
+            return 1f;
+
+        int myPos = _myLapCounter.GetCarPosition();
+        int playerPos = _playerLapCounter.GetCarPosition();
+
+        int diff = playerPos - myPos;
+
+        // - Player ahead - AI goes faster
+        if (diff < 0)
+            return 1f;
+
+        switch (diff)
+        {
+            case 0: return 1.00f;
+            case 1: return 1.03f;
+            case 2: return 1.05f;
+            case 3: return 1.07f;
+            default: return 1.10f;
         }
     }
 }
