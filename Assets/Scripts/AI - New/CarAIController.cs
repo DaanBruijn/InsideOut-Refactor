@@ -62,6 +62,8 @@ public class CarAIController : MonoBehaviour
     // - State
     AIStateMachine _stateMachine;
     AIState _lastState;
+    float _lastStateChangeTime;
+    float _stateCooldown;
     
     void Awake()
     {
@@ -84,6 +86,8 @@ public class CarAIController : MonoBehaviour
 
         if (player != null)
             _playerLapCounter = player.GetComponent<CarLapCounter>();
+
+        _lastStateChangeTime = Time.time;
     }
 
     void FixedUpdate()
@@ -107,8 +111,6 @@ public class CarAIController : MonoBehaviour
         Vector2 input;
         input.x = TurnTowardsTarget();
         input.y = ApplyDrivingForce(input.x);
-        
-        Debug.Log($"{name} throttle: {input.y}");
 
         _carController.SetInputVector(input);
     }
@@ -253,6 +255,7 @@ public class CarAIController : MonoBehaviour
     {
         AIState desiredState = null;
 
+        // - Switch Behaviour depending on Player Location / Position
         switch (_playerSituation)
         {
             case PlayerSituation.BehindFar: 
@@ -272,10 +275,24 @@ public class CarAIController : MonoBehaviour
                 break;
         }
 
-        if (_lastState == null || desiredState.GetType() != _lastState.GetType())
+        if (_lastState == null)
         {
             _stateMachine.ChangeState(desiredState, this);
             _lastState = desiredState;
+            _lastStateChangeTime = Time.time;
+            return;
+        }
+
+        // - Switch behaviour after cooldown
+        if (desiredState.GetType() != _lastState.GetType())
+        {
+            if (Time.time - _lastStateChangeTime >= _stateCooldown)
+            {
+                Debug.Log($"{name} -> {desiredState.GetType().Name}");
+                _stateMachine.ChangeState(desiredState, this);
+                _lastState = desiredState;
+                _lastStateChangeTime = Time.time;
+            }
         }
     }
 }

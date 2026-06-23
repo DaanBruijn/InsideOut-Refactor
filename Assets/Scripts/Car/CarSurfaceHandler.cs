@@ -64,8 +64,6 @@ public class CarSurfaceHandler : MonoBehaviour
             drivingOnSurface = Surface.SurfaceTypes.Road;
         
         lastSampledSurfacePosition = transform.position;
-        
-        Debug.Log($"Driving on {drivingOnSurface}");
     }
 
     public Surface.SurfaceTypes GetSurfaceType()
