@@ -3283,9 +3283,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   aiMode: 1
-  maxSpeed: 0
+  maxSpeed: 6.5
   isAvoidingCars: 1
   personality: {fileID: 11400000, guid: 99af5b718470f5d4cbbb46430420e102, type: 2}
+  attackBehaviour: {fileID: 11400000, guid: 6d65197cf5f2c3247b7a1ed0baadb590, type: 2}
+  defendBehaviour: {fileID: 11400000, guid: dbcfbcb1125072e4dab71bd5d8a3d600, type: 2}
+  catchUpBehaviour: {fileID: 11400000, guid: 7beed3f88c14a4446a42772decff6c18, type: 2}
+  normalBehaviour: {fileID: 11400000, guid: a62875e140d174d4ca7d2e02aa32a89f, type: 2}
 --- !u!114 &1139459216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3713,9 +3717,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   aiMode: 1
-  maxSpeed: 0
+  maxSpeed: 6.5
   isAvoidingCars: 1
   personality: {fileID: 11400000, guid: 4840ef25a77b02d4a819c477abe0302b, type: 2}
+  attackBehaviour: {fileID: 11400000, guid: 6d65197cf5f2c3247b7a1ed0baadb590, type: 2}
+  defendBehaviour: {fileID: 11400000, guid: dbcfbcb1125072e4dab71bd5d8a3d600, type: 2}
+  catchUpBehaviour: {fileID: 11400000, guid: 7beed3f88c14a4446a42772decff6c18, type: 2}
+  normalBehaviour: {fileID: 11400000, guid: a62875e140d174d4ca7d2e02aa32a89f, type: 2}
 --- !u!114 &1239730040
 MonoBehaviour:
   m_ObjectHideFlags: 0

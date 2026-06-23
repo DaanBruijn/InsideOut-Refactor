@@ -58,14 +58,22 @@ public class CarAIController : MonoBehaviour
     bool _isAheadOfPlayer;
     bool _isNearPlayer;
     float _distanceToPlayer;
-
+    
+    // - State
+    AIStateMachine _stateMachine;
+    AIState _lastState;
     
     void Awake()
     {
+        // - References
         _carController = GetComponent<CarController>();
         _myLapCounter = GetComponent<CarLapCounter>();
         _boxCollider2D = GetComponent<BoxCollider2D>();
         _allWaypoints = FindObjectsOfType<WaypointNode>();
+        
+        // - Setup StateMachine
+        _stateMachine = new AIStateMachine();
+        _stateMachine.Initialize(new NormalState(), this);
 
         _currentBehaviour = normalBehaviour;
     }
@@ -81,8 +89,10 @@ public class CarAIController : MonoBehaviour
     void FixedUpdate()
     {
         EvaluatePlayerSituation();
-        EvaluateBehaviour();
-
+        UpdateStateFromSituation();
+        
+        _stateMachine.Tick(this);
+        
         switch (aiMode)
         {
             case AIMode.followPlayer:
@@ -97,11 +107,10 @@ public class CarAIController : MonoBehaviour
         Vector2 input;
         input.x = TurnTowardsTarget();
         input.y = ApplyDrivingForce(input.x);
+        
+        Debug.Log($"{name} throttle: {input.y}");
 
         _carController.SetInputVector(input);
-
-        Debug.DrawLine(transform.position, _targetPosition, Color.red);
-        Debug.Log($"{name} | {_playerSituation} | {_currentBehaviour.name}");
     }
     
     void FollowPlayer()
@@ -230,34 +239,43 @@ public class CarAIController : MonoBehaviour
             _playerSituation = _isNearPlayer ? PlayerSituation.BehindNear : PlayerSituation.BehindFar;
     }
     
-    void EvaluateBehaviour()
+    public void SetState(AIState newState)
     {
-        if (personality == null)
-            return;
+        _stateMachine.ChangeState(newState, this);
+    }
+    
+    public void SetBehaviour(AIBehaviourSO behaviour)
+    {
+        _currentBehaviour = behaviour;
+    }
+    
+    void UpdateStateFromSituation()
+    {
+        AIState desiredState = null;
 
         switch (_playerSituation)
         {
-            case PlayerSituation.BehindFar:
-                _currentBehaviour = catchUpBehaviour;
+            case PlayerSituation.BehindFar: 
+                desiredState = new CatchUpState();
                 break;
 
             case PlayerSituation.BehindNear:
-                _currentBehaviour =
-                    personality.aggression > 1.2f
-                        ? attackBehaviour
-                        : catchUpBehaviour;
+                desiredState = personality.aggression > 1.2f ? new AttackState() : new CatchUpState();
                 break;
 
             case PlayerSituation.AheadNear:
-                _currentBehaviour =
-                    personality.aggression < 1f
-                        ? defendBehaviour
-                        : normalBehaviour;
+                desiredState = personality.aggression < 1f ? new DefendState() : new NormalState();
                 break;
 
             case PlayerSituation.AheadFar:
-                _currentBehaviour = normalBehaviour;
+                desiredState = new NormalState();
                 break;
+        }
+
+        if (_lastState == null || desiredState.GetType() != _lastState.GetType())
+        {
+            _stateMachine.ChangeState(desiredState, this);
+            _lastState = desiredState;
         }
     }
 }
