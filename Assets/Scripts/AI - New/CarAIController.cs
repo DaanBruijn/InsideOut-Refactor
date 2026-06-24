@@ -68,6 +68,14 @@ public class CarAIController : MonoBehaviour
     float _lastStateChangeTime;
     float _stateCooldown;
     
+    // - AI Stuck
+    float _stuckTimer;
+    float _recoveryTimer;
+    float _recoveryCooldown;
+    bool _isRecovering;
+    bool _hasStartedDriving;
+    
+    
     void Awake()
     {
         // - References
@@ -99,6 +107,8 @@ public class CarAIController : MonoBehaviour
         UpdateStateFromSituation();
         
         _stateMachine.Tick(this);
+
+        CheckIfStuck();
         
         switch (aiMode)
         {
@@ -111,11 +121,79 @@ public class CarAIController : MonoBehaviour
                 break;
         }
 
-        Vector2 input;
-        input.x = TurnTowardsTarget();
-        input.y = ApplyDrivingForce(input.x);
+        CarInput();
+    }
 
+    void CarInput()
+    {
+        Vector2 input;
+
+        if (_isRecovering)
+        {
+            input = GetRecoveryInput();
+        }
+        else
+        {
+            input.x = TurnTowardsTarget();
+            input.y = ApplyDrivingForce(input.x);
+        }
+        
         _carController.SetInputVector(input);
+    }
+
+    Vector2 GetRecoveryInput()
+    {
+        return new Vector2(0f, -1f);
+    }
+    
+    void CheckIfStuck()
+    {
+        if (_carController.GetVelocityMagnitude() > 1f)
+        {
+            _hasStartedDriving = true;
+        }
+        
+        if (!_hasStartedDriving)
+            return;
+        
+        if (_recoveryCooldown > 0f)
+        {
+            _recoveryCooldown -= Time.fixedDeltaTime;
+            return;
+        }
+        
+        float speed = _carController.GetVelocityMagnitude();
+
+        if (speed < 0.3f)
+            _stuckTimer += Time.fixedDeltaTime;
+        else 
+            _stuckTimer = 0f;
+
+        if (!_isRecovering && _stuckTimer > 2f)
+        {
+            _isRecovering = true;
+            _recoveryTimer = 1f;
+
+            Debug.Log($"{name} started recovery attempt");
+            Debug.Log(_currentWaypointNode.name);
+        }
+        
+        if (_isRecovering)
+        {
+            _recoveryTimer -= Time.fixedDeltaTime;
+
+            if (_recoveryTimer <= 0f)
+            {
+                _isRecovering = false;
+                _stuckTimer = 0f;
+                _recoveryCooldown = 2f;
+                
+                _currentWaypointNode = FindClosestWaypoint();
+
+                Debug.Log($"{name} recovered successfully");
+                Debug.Log(_currentWaypointNode.name);
+            }
+        }
     }
     
     void FollowPlayer()
@@ -165,10 +243,6 @@ public class CarAIController : MonoBehaviour
 
         steer *= _currentBehaviour.steeringMultiplier;
 
-        // - Simulation human error
-        steer *= Random.Range(0.97f, 1.03f);
-        steer = Mathf.Clamp(steer, -0.85f, 0.85f);
-
         return steer;
     }
 
@@ -184,7 +258,7 @@ public class CarAIController : MonoBehaviour
         float throttle = 1.05f - Mathf.Abs(steering);
 
         // - Simulation human error
-        float mistakeFactor = Random.Range(0.92f, 1.0f);
+        float mistakeFactor = Random.Range(0.65f, 1.0f);
 
         return throttle * personality.aggression * mistakeFactor;
     }
