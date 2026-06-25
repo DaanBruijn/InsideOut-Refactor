@@ -34,6 +34,9 @@ public class CarLapCounter : MonoBehaviour
 
     void Start()
     {
+        if (CompareTag("AI"))
+            GameManager.instance.RegisterCar(); // - Register the AI seperate from the player - AI Already in Scene
+        
         if (CompareTag("Player"))
         {
             lapCounterHandler = FindObjectOfType<LapCounterHandler>();
@@ -114,6 +117,8 @@ public class CarLapCounter : MonoBehaviour
 
                     if (lapsCompleted >= lapsToComplete)
                     {
+                        Debug.Log($"{name} finished! Tag: {tag}");
+                        
                         isRaceCompleted = true;
                         
                         // - Makes sure one car is finished - waits for the others to finish too

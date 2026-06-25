@@ -35,7 +35,7 @@ public class SpawnCar : MonoBehaviour
             Transform spawnPoint = spawnPoints[i].transform;
             
             if (driverInfoList.Count == 0)
-                return;
+                break;
 
             DriverInfo driverInfo = driverInfoList[0];
         
@@ -57,12 +57,17 @@ public class SpawnCar : MonoBehaviour
                     numberOfCarsSpawned++;
                     GameManager.instance.SetTotalCars(numberOfCarsSpawned);
                     
+                    Debug.Log($"Spawning: {driverInfo.name}");
+                    
                     break;
                 }
             }
             
             // - Removed the drivers
             driverInfoList.Remove(driverInfo);
+            
+            Debug.Log($"DriverInfo count: {driverInfoList.Count}");
+            Debug.Log($"SpawnPoint count: {spawnPoints.Length}");
         }
     }
 

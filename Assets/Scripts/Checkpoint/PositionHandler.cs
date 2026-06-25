@@ -44,7 +44,7 @@ public class PositionHandler : MonoBehaviour
         // - Give CarlapCounter the updated data
         carLapCounter.SetCarPosition(carPosition);
 
-        if (carLapCounter.IsRaceCompleted())
+        if (carLapCounter.IsRaceCompleted() && CompareTag("Player"))
         {
             // - Set car last position in race
             int playerNumber = carLapCounter.GetComponent<CarInputHandler>().playerNumber;

@@ -141,6 +141,8 @@ public class GameManager : MonoBehaviour
         finishedCars = 0;
         
         Debug.Log($"--total Cars in race: {totalCars}--");
+        
+        Debug.Log($"SetTotalCars called with {amount}");
     }
 
     public void CarFinished()
@@ -190,5 +192,10 @@ public class GameManager : MonoBehaviour
         // - DEBUG for Menu Reset !!
         else if (Input.GetKeyDown(KeyCode.F12))
             SceneManager.LoadScene("Menu");
+    }
+    
+    public void RegisterCar()
+    {
+        totalCars++;
     }
 }
