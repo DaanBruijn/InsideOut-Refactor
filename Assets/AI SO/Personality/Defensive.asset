@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speedMultiplier: 0.9
   aggression: 0.8
-  corneringSkill: 1
+  corneringSkill: 1.2
   avoidanceStrength: 1

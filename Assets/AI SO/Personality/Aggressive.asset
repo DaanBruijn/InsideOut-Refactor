@@ -15,4 +15,4 @@ MonoBehaviour:
   speedMultiplier: 1.05
   aggression: 1.5
   corneringSkill: 1
-  avoidanceStrength: 0.2
+  avoidanceStrength: 0.1
